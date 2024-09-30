@@ -16,6 +16,7 @@
 import datetime
 import hashlib
 import json
+import logging
 import os
 import pathlib
 import re
@@ -318,7 +319,7 @@ def rm():
 
     return get_json_result(data=True)
 
-
+_logger = logging.getLogger(__name__)
 @manager.route('/run', methods=['POST'])
 @login_required
 @validate_request("doc_ids", "run")
@@ -336,6 +337,7 @@ def run():
             tenant_id = DocumentService.get_tenant_id(id)
             if not tenant_id:
                 return get_data_error_result(retmsg="Tenant not found!")
+            _logger.info("Delete document from ES: %s" % id)
             ELASTICSEARCH.deleteByQuery(
                 Q("match", doc_id=id), idxnm=search.index_name(tenant_id))
 

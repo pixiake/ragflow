@@ -15,6 +15,7 @@
 #
 import datetime
 import json
+import logging
 import traceback
 
 from flask import request
@@ -247,6 +248,7 @@ def create():
     except Exception as e:
         return server_error_response(e)
 
+_logger = logging.getLogger(__name__)
 
 @manager.route('/retrieval_test', methods=['POST'])
 @login_required
@@ -278,9 +280,9 @@ def retrieval_test():
         e, kb = KnowledgebaseService.get_by_id(kb_id[0])
         if not e:
             return get_data_error_result(retmsg="Knowledgebase not found!")
-
+        _logger.info(f"retrieval_test: embed model: {kb.embd_id}")
         embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING.value, llm_name=kb.embd_id)
-
+        _logger.info(f"retrieval_test: embd_mdl: {embd_mdl.llm_name}")
         rerank_mdl = None
         if req.get("rerank_id"):
             rerank_mdl = LLMBundle(kb.tenant_id, LLMType.RERANK.value, llm_name=req["rerank_id"])

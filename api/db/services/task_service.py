@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 import os
 import random
 
@@ -132,6 +133,7 @@ class TaskService(CommonService):
                 cls.model.update(progress=info["progress"]).where(
                     cls.model.id == id).execute()
 
+_logger = logging.getLogger(__name__)
 
 def queue_tasks(doc: dict, bucket: str, name: str):
     def new_task():
@@ -171,8 +173,9 @@ def queue_tasks(doc: dict, bucket: str, name: str):
             tsks.append(task)
     else:
         tsks.append(new_task())
-
+    _logger.info(f"Queue tasks: {tsks}")
     bulk_insert_into_db(Task, tsks, True)
+    _logger.info(f"Queue tasks: parse: {doc['id']}")
     DocumentService.begin2parse(doc["id"])
 
     for t in tsks:

@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 import re
 from typing import Optional
 import threading
@@ -20,6 +21,7 @@ import requests
 from huggingface_hub import snapshot_download
 from openai.lib.azure import AzureOpenAI
 from zhipuai import ZhipuAI
+from volcenginesdkarkruntime import Ark
 import os
 from abc import ABC
 from ollama import Client
@@ -715,3 +717,30 @@ class HuggingFaceEmbed(Base):
         else:
             raise Exception(f"Error: {response.status_code} - {response.text}")
 
+
+class VolcEngineEmbed(Base):
+    def __init__(self, key, model_name, base_url='https://ark.cn-beijing.volces.com/api/v3'):
+        """
+        Since do not want to modify the original database fields, and the VolcEngine authentication method is quite special,
+        Assemble ark_api_key, ep_id into api_key, store it as a dictionary type, and parse it for use
+        model_name is for display only
+        """
+        self.base_url = 'https://ark.cn-beijing.volces.com/api/v3'
+        self.ark_api_key = json.loads(key).get('ark_api_key', '')
+        self.model_name = json.loads(key).get('ep_id', '') + json.loads(key).get('endpoint_id', '')
+        self.client = Ark(base_url=self.base_url, api_key=self.ark_api_key)
+
+    def encode(self, texts: list, batch_size=32):
+        arr = []
+        tks_num = 0
+        for txt in texts:
+            res = self.client.embeddings.create(input=txt,
+                                                model=self.model_name)
+            arr.append(res.data[0].embedding)
+            tks_num += res.usage.total_tokens
+        return np.array(arr), tks_num
+
+    def encode_queries(self, text):
+        res = self.client.embeddings.create(input=text,
+                                            model=self.model_name)
+        return np.array(res.data[0].embedding), res.usage.total_tokens

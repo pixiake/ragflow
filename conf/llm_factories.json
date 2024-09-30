@@ -377,6 +377,12 @@
                     "tags": "LLM,CHAT,4k",
                     "max_tokens": 4096,
                     "model_type": "chat"
+                },
+                {
+                    "llm_name": "Doubao-embedding-large",
+                    "tags": "LLM,TEXT EMBEDDING",
+                    "max_tokens": 512,
+                    "model_type": "embedding"
                 }
             ]
         },
